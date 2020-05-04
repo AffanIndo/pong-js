@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong</title>
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap" rel="stylesheet"> 
+    <style>
+        * { margin: 0; padding: 0; }
+        body { font-family: 'Press Start 2P', cursive; }
+        .container { text-align: center; }
+        a:link, a:visited { color: black; }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <p>pong [<a href="https://github.com/AffanIndo/pong-js">github</a>]</p>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+        var canvas;
+        var canvasContext;
+        var ballX = 30;
+        var ballY = 30;
+        var ballSpeedX = 10;
+        var ballSpeedY = 5;
+        var pad1X = 0;
+        var pad1Y = 30;
+        var pad2Y = 30;
+        var padHeight = 100;
+        var padWidth = 10;
+        var computerSpeed = 10;
+        var score1 = 0;
+        var score2 = 0;
+        var winScore = 5;
+        var winScreen = false;
+
+        window.onload = function() {
+            canvas = document.getElementById('gameCanvas');
+            canvasContext = canvas.getContext('2d');
+
+            fps = 30
+            setInterval(function() {
+                update();
+                draw();
+            }, 1000/fps);
+
+            canvas.addEventListener('mousedown', mouseClick);
+
+            canvas.addEventListener('mousemove', function(evt) {
+                var mousePos = calculateMousePos(evt);
+                pad1Y = mousePos.y - (padHeight/2);
+            })
+        }
+
+        function update() {
+            if (winScreen) {
+                return;
+            }
+
+            computerAi()
+
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballX < 0) {
+                if (ballY > pad1Y && ballY < pad1Y + padHeight) {
+                    ballSpeedX = -ballSpeedX
+                    var deltaY = ballY - (pad1Y+padHeight/2);
+                    ballSpeedY = deltaY * 0.35;
+                } else {
+                    score2++; // before reset
+                    resetBall();
+                }
+            }
+            if (ballX > canvas.width) {
+                if (ballY > pad2Y && ballY < pad2Y + padHeight) {
+                    ballSpeedX = -ballSpeedX
+                    var deltaY = ballY - (pad2Y+padHeight/2);
+                    ballSpeedY = deltaY * 0.35;
+                } else {
+                    score1++; // before reset
+                    resetBall();
+                }
+            }
+            if (ballY < 0) {
+                ballSpeedY = -ballSpeedY;
+            }
+            if (ballY > canvas.height) {
+                ballSpeedY = -ballSpeedY;
+            }
+        }
+
+        function draw() {
+            // canvas
+            drawRect(0, 0, canvas.width, canvas.height, 'black');
+            canvasContext.fillStyle = 'white';
+            canvasContext.font = "20px 'Press Start 2P'";
+
+            // win screen
+            if (winScreen) {
+                if (score1 >= winScore) {
+                    var textString1 = "player wins";
+                } else if (score2 >= winScore) {
+                    var textString1 = "computer wins";
+                }
+
+                var textString2 = "click to continue";
+                var textWidth1 = canvasContext.measureText(textString1).width;
+                var textWidth2 = canvasContext.measureText(textString2).width;
+                canvasContext.fillText(textString1, (canvas.width/2) - (textWidth1/2), (canvas.height/2) - 40);
+                canvasContext.fillText(textString2, (canvas.width/2) - (textWidth2/2), (canvas.height/2));
+                return;
+            }
+
+            // net
+            drawNet();
+
+            // ball
+            drawRect(ballX, ballY, 10, 10, 'white');
+
+            // left player paddle
+            drawRect(pad1X, pad1Y, padWidth, padHeight, 'white');
+
+            // right player paddle
+            drawRect(canvas.width - padWidth, pad2Y, padWidth, padHeight, 'white');
+
+            // score
+            canvasContext.fillText(score1, 100, 100)
+            canvasContext.fillText(score2, canvas.width-100, 100)
+        }
+
+        // fillRect that accept color in parameter as well
+        function drawRect(positionX, positionY, width, height, color) {
+            canvasContext.fillStyle = color;
+            canvasContext.fillRect(positionX, positionY, width, height);
+        }
+
+        function calculateMousePos(evt) {
+            var rect = canvas.getBoundingClientRect();
+            var root = document.documentElement;
+            var mouseX = evt.clientX - rect.left - root.scrollLeft;
+            var mouseY = evt.clientY - rect.top - root.scrollTop;
+            return {
+                x:mouseX,
+                y:mouseY
+            };
+        }
+
+        function mouseClick() {
+            if (winScreen) {
+                score1 = 0;
+                score2 = 0;
+                winScreen = false;
+            }
+        }
+
+        function resetBall() {
+            if (score1 >= winScore || score2 >= winScore) {
+                winScreen = true;
+            }
+
+            ballSpeedX = -ballSpeedX;
+            ballX = canvas.width/2;
+            ballY = canvas.height/2;
+        }
+
+        function computerAi() {
+            var pad2YCenter = pad2Y + (padHeight/2)
+            if (pad2YCenter < ballY - 30) {
+                pad2Y += computerSpeed;
+            } else if (pad2YCenter >= ballY + 30) {
+                pad2Y -= computerSpeed;
+            }
+        }
+
+        function drawNet() {
+            for (let i = 0; i < canvas.height; i += 40) {
+                drawRect((canvas.width/2) - 2, i, 4, 20, 'white');
+            }
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,2 +1,2 @@
-# pong-js
-Pong in JavaScript
+## Demo
+![Pong Demo](demo.gif)
